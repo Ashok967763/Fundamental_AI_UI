@@ -1,6 +1,6 @@
 import { Config, ConfigDetail, Run, PerformanceData, DashboardOverview } from '../types';
 
-const API_BASE_URL = 'https://7b248abdcd8f.ngrok-free.app/api';
+const API_BASE_URL = 'https://7b248abdcd8f.ngrok-free.app/api?ngrok-skip-browser-warning=true';
 
 interface ApiResponse<T> {
   success: boolean;

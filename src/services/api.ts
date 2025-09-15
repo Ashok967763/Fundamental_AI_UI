@@ -1,6 +1,6 @@
 import { Config, ConfigDetail, Run, PerformanceData, DashboardOverview } from '../types';
 
-const API_BASE_URL = 'https://7b248abdcd8f.ngrok-free.app/api?ngrok-skip-browser-warning=true';
+const API_BASE_URL = 'https://7b248abdcd8f.ngrok-free.app/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -11,7 +11,12 @@ interface ApiResponse<T> {
 class ApiClient {
   private async request<T>(endpoint: string): Promise<T> {
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

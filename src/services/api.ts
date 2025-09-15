@@ -1,6 +1,6 @@
 import { Config, ConfigDetail, Run, PerformanceData, DashboardOverview } from '../types';
 
-const API_BASE_URL = 'http://44.205.246.33:3001/api';
+const API_BASE_URL = 'https://7b248abdcd8f.ngrok-free.app/api';
 
 interface ApiResponse<T> {
   success: boolean;

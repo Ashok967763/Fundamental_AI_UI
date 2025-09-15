@@ -1,8 +1,6 @@
 import { Config, ConfigDetail, Run, PerformanceData, DashboardOverview } from '../types';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-api-gateway-url.amazonaws.com/prod/api'
-  : 'http://localhost:3001/api';
+const API_BASE_URL = 'http://44.205.246.33:3001/api';
 
 interface ApiResponse<T> {
   success: boolean;

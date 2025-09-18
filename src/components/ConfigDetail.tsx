@@ -282,7 +282,7 @@ const ConfigDetail: React.FC = () => {
               {metricKeys.filter(k => visibleScoreKeys.has(k)).map((k, i) => (
                 <Line
                   key={k}
-                  type="monotone"
+                  type="linear"
                   dataKey={k}
                   name={toTitle(k)}
                   stroke={COLOR_PALETTE[i % COLOR_PALETTE.length]}

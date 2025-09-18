@@ -32,6 +32,9 @@ import {
   ListItemIcon,
   ListItemText,
   CircularProgress,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -58,8 +61,9 @@ import {
   Warning,
   Info,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, BarChart as RechartsBarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, Legend, Brush, ReferenceLine } from 'recharts';
 import { apiClient } from '../services/api';
+import { mockScores } from '../data/mockScores';
 import { ConfigDetail as ConfigDetailType } from '../types';
 
 const ConfigDetail: React.FC = () => {
@@ -72,6 +76,33 @@ const ConfigDetail: React.FC = () => {
   const [configDetail, setConfigDetail] = useState<ConfigDetailType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Scores chart UI state
+  const [visibleScoreKeys, setVisibleScoreKeys] = useState<Set<string>>(new Set());
+  const scoresData: Record<string, Record<string, unknown>> | undefined = React.useMemo(() => {
+    return ((configDetail as any)?.scores as Record<string, Record<string, unknown>> | undefined) ??
+      (mockScores as unknown as Record<string, Record<string, unknown>>);
+  }, [configDetail]);
+  const scoreEntries = React.useMemo(() => Object.entries(scoresData || {}), [scoresData]);
+  const scoreMetricKeys = React.useMemo(() => {
+    if (!scoreEntries.length) return [] as string[];
+    const sample = scoreEntries[0][1] as Record<string, unknown>;
+    return Object.keys(sample).filter((key) => {
+      const v = sample[key as keyof typeof sample];
+      return typeof v === 'number' && v >= 0 && v <= 1;
+    });
+  }, [scoreEntries]);
+  useEffect(() => {
+    if (scoreMetricKeys.length && visibleScoreKeys.size === 0) {
+      setVisibleScoreKeys(new Set(scoreMetricKeys));
+    }
+  }, [scoreMetricKeys]);
+  const toggleScoreSeries = (key: string) => {
+    setVisibleScoreKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
 
   const loadConfigDetail = async () => {
     if (!configId) return;
@@ -180,6 +211,94 @@ const ConfigDetail: React.FC = () => {
     { name: 'Good Runs', value: successRuns, color: chartColors.success },
     { name: 'Bad Runs', value: configDetail.recent_runs.length - successRuns, color: chartColors.error },
   ];
+
+  // Build multi-series line chart from optional scores object on configDetail
+  const renderScoresChart = () => {
+    const scores = scoresData;
+    if (!scores || typeof scores !== 'object') return null;
+
+    const xEntries = scoreEntries;
+    if (xEntries.length === 0) return null;
+
+    // Keep metric order as given in the object; include only *_score metrics
+    const metricKeys = scoreMetricKeys;
+
+    if (metricKeys.length === 0) return null;
+
+    // Transform into recharts-friendly array, sort by numeric x
+    const data = xEntries
+      .map(([x, obj]) => {
+        const row: Record<string, number | null> & { x: number } = { x: Number(x) };
+        for (const k of metricKeys) {
+          const val = (obj as Record<string, unknown>)[k];
+          const num = typeof val === 'number' ? val : NaN;
+          // Ignore values outside [0,1]
+          row[k] = Number.isFinite(num) && num >= 0 && num <= 1 ? num : null;
+        }
+        return row;
+      })
+      .sort((a, b) => a.x - b.x);
+
+    const COLOR_PALETTE = [
+      '#2563eb', '#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#22c55e', '#eab308', '#f97316',
+      '#dc2626', '#0ea5e9', '#14b8a6', '#a3e635', '#f43f5e', '#38bdf8', '#84cc16', '#fb923c', '#6366f1', '#34d399'
+    ];
+
+    const toTitle = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+    return (
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
+          Scores Overview
+        </Typography>
+        <Box sx={{ mb: 2 }}>
+          <FormGroup row>
+            {metricKeys.map((k) => (
+              <FormControlLabel
+                key={k}
+                control={<Checkbox checked={visibleScoreKeys.has(k)} onChange={() => toggleScoreSeries(k)} size="small" />}
+                label={toTitle(k)}
+              />
+            ))}
+          </FormGroup>
+        </Box>
+        <Box sx={{ height: 400 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="x" type="number" stroke="#666" />
+              <YAxis domain={[0, 1]} stroke="#666" tickCount={6} />
+              <RechartsTooltip
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                }}
+                formatter={(value: number, name: string) => [Number(value).toFixed(3), toTitle(name)]}
+                labelFormatter={(label) => `X: ${label}`}
+              />
+              <Legend formatter={(v) => toTitle(String(v))} onClick={(e: any) => toggleScoreSeries(e.dataKey)} />
+              {metricKeys.filter(k => visibleScoreKeys.has(k)).map((k, i) => (
+                <Line
+                  key={k}
+                  type="monotone"
+                  dataKey={k}
+                  name={toTitle(k)}
+                  stroke={COLOR_PALETTE[i % COLOR_PALETTE.length]}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                  isAnimationActive={false}
+                />
+              ))}
+              <Brush dataKey="x" height={24} stroke="#8884d8" />
+            </LineChart>
+          </ResponsiveContainer>
+        </Box>
+      </Box>
+    );
+  };
 
   const renderChart = () => {
     const commonProps = {
@@ -428,6 +547,7 @@ const ConfigDetail: React.FC = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
+                {renderScoresChart()}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h5" fontWeight={600}>
                       Performance Trend
@@ -464,6 +584,7 @@ const ConfigDetail: React.FC = () => {
                       {renderChart()}
                     </ResponsiveContainer>
                   </Box>
+                  
                 </CardContent>
               </Card>
             </Grid>

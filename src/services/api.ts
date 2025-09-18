@@ -66,24 +66,25 @@ class ApiClient {
     return this.request<PerformanceData[]>(`/dashboard/configs/${id}/performance`);
   }
 
-  async getRecentRuns(id: string): Promise<Run[]> {
-    return this.request<Run[]>(`/dashboard/configs/${id}/recent-runs`);
+  async getRecentRuns(id: string): Promise<{ config_name: string; runs: Run[] }> {
+    return this.request<{ config_name: string; runs: Run[] }>(`/dashboard/configs/${id}/recent-runs`);
   }
 
   // Helper method to get full config detail
-  async getConfigDetail(id: string): Promise<ConfigDetail> {
-    const [performanceData, recentRuns] = await Promise.all([
-      this.getConfigPerformance(id),
-      this.getRecentRuns(id)
-    ]);
+ // Helper method to get full config detail
+async getConfigDetail(id: string): Promise<ConfigDetail> {
+  const [performanceData, recentRunsResponse] = await Promise.all([
+    this.getConfigPerformance(id),
+    this.getRecentRuns(id)
+  ]);
 
-    return {
-      id,
-      name: id.replace('config_', '').toLowerCase() + '_config',
-      performance_data: performanceData,
-      recent_runs: recentRuns
-    };
-  }
+  return {
+    id,
+    name: recentRunsResponse.config_name, // Use real config name from API
+    performance_data: performanceData,
+    recent_runs: recentRunsResponse.runs // Use the runs array from the response
+  };
+}
 }
 
 export const apiClient = new ApiClient();

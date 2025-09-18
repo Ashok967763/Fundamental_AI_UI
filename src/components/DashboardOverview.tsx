@@ -341,14 +341,14 @@ const DashboardOverview: React.FC = () => {
             
             <Box sx={{ flexGrow: 1 }} />
             
-            <Button
+            {/* <Button
               variant="outlined"
               startIcon={<Refresh />}
               onClick={handleRefresh}
               disabled={isLoading}
             >
               Refresh
-            </Button>
+            </Button> */}
           </Box>
         </CardContent>
       </Card>

@@ -35,6 +35,10 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  Select,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -246,21 +250,416 @@ const ConfigDetail: React.FC = () => {
 
     const toTitle = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+
     return (
       <Box sx={{ mt: 4 }}>
         <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
           Scores Overview
         </Typography>
         <Box sx={{ mb: 2 }}>
-          <FormGroup row>
-            {metricKeys.map((k) => (
-              <FormControlLabel
-                key={k}
-                control={<Checkbox checked={visibleScoreKeys.has(k)} onChange={() => toggleScoreSeries(k)} size="small" />}
-                label={toTitle(k)}
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Talents Dropdown */}
+            {(metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 && (
+              <FormControl sx={{ minWidth: 180 }} size="small">
+                <InputLabel>🎯 Talents</InputLabel>
+                <Select
+                  multiple
+                  value={Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('talent'))}
+                  onChange={(e) => {
+                    const selectedValues = e.target.value as string[];
+                    
+                    // Check if "select-all-talents" was clicked
+                    if (selectedValues.includes('select-all-talents')) {
+                      const talentKeys = (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent'));
+                      const allSelected = talentKeys.length > 0 && talentKeys.every(k => visibleScoreKeys.has(k));
+                      
+                      const newKeys = new Set(visibleScoreKeys);
+                      if (allSelected) {
+                        // Unselect all talents
+                        talentKeys.forEach(k => newKeys.delete(k));
+                      } else {
+                        // Select all talents
+                        talentKeys.forEach(k => newKeys.add(k));
+                      }
+                      setVisibleScoreKeys(newKeys);
+                      return;
+                    }
+                    
+                    // Regular selection logic
+                    const selectedTalents = selectedValues.filter(v => v !== 'select-all-talents');
+                    const currentTalents = Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('talent'));
+                    
+                    // Remove all current talents
+                    const newKeys = new Set(visibleScoreKeys);
+                    currentTalents.forEach(k => newKeys.delete(k));
+                    
+                    // Add selected talents
+                    selectedTalents.forEach(k => newKeys.add(k));
+                    
+                    setVisibleScoreKeys(newKeys);
+                  }}
+                  input={<OutlinedInput label="🎯 Talents" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={toTitle(value).replace('Talent', '').trim()} 
+                          size="small" 
+                          color="primary"
+                          variant="outlined"
               />
             ))}
-          </FormGroup>
+                    </Box>
+                  )}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200,
+                        width: 250,
+                        minWidth: 250,
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                  }}
+                >
+                  {/* Select/Unselect All for Talents */}
+                  <MenuItem 
+                    value="select-all-talents"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    sx={{ 
+                      borderBottom: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      fontWeight: 600,
+                      '&:hover': { backgroundColor: '#e0e0e0' },
+                      '&.Mui-selected': { backgroundColor: '#e0e0e0' }
+                    }}
+                  >
+                    <Checkbox 
+                      checked={(metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 && 
+                               (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k))}
+                      indeterminate={
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 &&
+                        !(metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k)) &&
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).some(k => visibleScoreKeys.has(k))
+                      }
+                      size="small"
+                    />
+                    <ListItemText 
+                      primary={
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 &&
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k))
+                          ? "Unselect All"
+                          : "Select All"
+                      } 
+                    />
+                  </MenuItem>
+                  
+                  {(metricKeys || [])
+                    .filter(k => k && k.toLowerCase().includes('talent'))
+                    .map((k) => (
+                      <MenuItem key={k} value={k} sx={{ py: 0.5 }}>
+                        <Checkbox checked={visibleScoreKeys.has(k)} size="small" />
+                        <ListItemText 
+                          primary={toTitle(k).replace('Talent', '').trim()} 
+                          primaryTypographyProps={{ fontSize: '0.875rem' }}
+                        />
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+
+            {/* Scores Dropdown */}
+            {(metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).length > 0 && (
+              <FormControl sx={{ minWidth: 180 }} size="small">
+                <InputLabel>📊 Scores</InputLabel>
+                <Select
+                  multiple
+                  value={Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent'))}
+                  onChange={(e) => {
+                    const selectedValues = e.target.value as string[];
+                    
+                    // Check if "select-all-scores" was clicked
+                    if (selectedValues.includes('select-all-scores')) {
+                      const scoreKeys = (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent'));
+                      const allSelected = scoreKeys.length > 0 && scoreKeys.every(k => visibleScoreKeys.has(k));
+                      
+                      const newKeys = new Set(visibleScoreKeys);
+                      if (allSelected) {
+                        // Unselect all scores
+                        scoreKeys.forEach(k => newKeys.delete(k));
+                      } else {
+                        // Select all scores
+                        scoreKeys.forEach(k => newKeys.add(k));
+                      }
+                      setVisibleScoreKeys(newKeys);
+                      return;
+                    }
+                    
+                    // Regular selection logic
+                    const selectedScores = selectedValues.filter(v => v !== 'select-all-scores');
+                    const currentScores = Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent'));
+                    
+                    // Remove all current scores
+                    const newKeys = new Set(visibleScoreKeys);
+                    currentScores.forEach(k => newKeys.delete(k));
+                    
+                    // Add selected scores
+                    selectedScores.forEach(k => newKeys.add(k));
+                    
+                    setVisibleScoreKeys(newKeys);
+                  }}
+                  input={<OutlinedInput label="📊 Scores" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={toTitle(value).replace('Score', '').trim()} 
+                          size="small" 
+                          color="success"
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200,
+                        width: 250,
+                        minWidth: 250,
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                  }}
+                >
+                  {/* Select/Unselect All for Scores */}
+                  <MenuItem 
+                    value="select-all-scores"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    sx={{ 
+                      borderBottom: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      fontWeight: 600,
+                      '&:hover': { backgroundColor: '#e0e0e0' },
+                      '&.Mui-selected': { backgroundColor: '#e0e0e0' }
+                    }}
+                  >
+                    <Checkbox 
+                      checked={(metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).length > 0 && 
+                               (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k))}
+                      indeterminate={
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).length > 0 &&
+                        !(metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k)) &&
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).some(k => visibleScoreKeys.has(k))
+                      }
+                      size="small"
+                    />
+                    <ListItemText 
+                      primary={
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).length > 0 &&
+                        (metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).every(k => visibleScoreKeys.has(k))
+                          ? "Unselect All"
+                          : "Select All"
+                      } 
+                    />
+                  </MenuItem>
+                  
+                  {(metricKeys || [])
+                    .filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent'))
+                    .map((k) => (
+                      <MenuItem key={k} value={k} sx={{ py: 0.5 }}>
+                        <Checkbox checked={visibleScoreKeys.has(k)} size="small" />
+                        <ListItemText 
+                          primary={toTitle(k).replace('Score', '').trim()} 
+                          primaryTypographyProps={{ fontSize: '0.875rem' }}
+                        />
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+
+            {/* Other Metrics Dropdown */}
+            {(metricKeys || []).filter(k => 
+              k && !k.toLowerCase().includes('talent') && 
+              !k.toLowerCase().includes('score')
+            ).length > 0 && (
+              <FormControl sx={{ minWidth: 180 }} size="small">
+                <InputLabel>🔧 Other Metrics</InputLabel>
+                <Select
+                  multiple
+                  value={Array.from(visibleScoreKeys).filter(k => 
+                    k && !k.toLowerCase().includes('talent') && 
+                    !k.toLowerCase().includes('score')
+                  )}
+                  onChange={(e) => {
+                    const selectedValues = e.target.value as string[];
+                    
+                    // Check if "select-all-others" was clicked
+                    if (selectedValues.includes('select-all-others')) {
+                      const otherKeys = (metricKeys || []).filter(k => 
+                        k && !k.toLowerCase().includes('talent') && 
+                        !k.toLowerCase().includes('score')
+                      );
+                      const allSelected = otherKeys.length > 0 && otherKeys.every(k => visibleScoreKeys.has(k));
+                      
+                      const newKeys = new Set(visibleScoreKeys);
+                      if (allSelected) {
+                        // Unselect all others
+                        otherKeys.forEach(k => newKeys.delete(k));
+                      } else {
+                        // Select all others
+                        otherKeys.forEach(k => newKeys.add(k));
+                      }
+                      setVisibleScoreKeys(newKeys);
+                      return;
+                    }
+                    
+                    // Regular selection logic
+                    const selectedOthers = selectedValues.filter(v => v !== 'select-all-others');
+                    const currentOthers = Array.from(visibleScoreKeys).filter(k => 
+                      k && !k.toLowerCase().includes('talent') && 
+                      !k.toLowerCase().includes('score')
+                    );
+                    
+                    // Remove all current others
+                    const newKeys = new Set(visibleScoreKeys);
+                    currentOthers.forEach(k => newKeys.delete(k));
+                    
+                    // Add selected others
+                    selectedOthers.forEach(k => newKeys.add(k));
+                    
+                    setVisibleScoreKeys(newKeys);
+                  }}
+                  input={<OutlinedInput label="🔧 Other Metrics" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={toTitle(value)} 
+                          size="small" 
+                          color="warning"
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 200,
+                        width: 250,
+                        minWidth: 250,
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: 'bottom',
+                      horizontal: 'left',
+                    },
+                    transformOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left',
+                    },
+                  }}
+                >
+                  {/* Select/Unselect All for Other Metrics */}
+                  <MenuItem 
+                    value="select-all-others"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    sx={{ 
+                      borderBottom: '1px solid #e0e0e0',
+                      backgroundColor: '#f5f5f5',
+                      fontWeight: 600,
+                      '&:hover': { backgroundColor: '#e0e0e0' },
+                      '&.Mui-selected': { backgroundColor: '#e0e0e0' }
+                    }}
+                  >
+                    <Checkbox 
+                      checked={(metricKeys || []).filter(k => 
+                        k && !k.toLowerCase().includes('talent') && 
+                        !k.toLowerCase().includes('score')
+                      ).length > 0 && 
+                      (metricKeys || []).filter(k => 
+                        k && !k.toLowerCase().includes('talent') && 
+                        !k.toLowerCase().includes('score')
+                      ).every(k => visibleScoreKeys.has(k))}
+                      indeterminate={
+                        (metricKeys || []).filter(k => 
+                          k && !k.toLowerCase().includes('talent') && 
+                          !k.toLowerCase().includes('score')
+                        ).length > 0 &&
+                        !(metricKeys || []).filter(k => 
+                          k && !k.toLowerCase().includes('talent') && 
+                          !k.toLowerCase().includes('score')
+                        ).every(k => visibleScoreKeys.has(k)) &&
+                        (metricKeys || []).filter(k => 
+                          k && !k.toLowerCase().includes('talent') && 
+                          !k.toLowerCase().includes('score')
+                        ).some(k => visibleScoreKeys.has(k))
+                      }
+                      size="small"
+                    />
+                    <ListItemText 
+                      primary={
+                        (metricKeys || []).filter(k => 
+                          k && !k.toLowerCase().includes('talent') && 
+                          !k.toLowerCase().includes('score')
+                        ).length > 0 &&
+                        (metricKeys || []).filter(k => 
+                          k && !k.toLowerCase().includes('talent') && 
+                          !k.toLowerCase().includes('score')
+                        ).every(k => visibleScoreKeys.has(k))
+                          ? "Unselect All"
+                          : "Select All"
+                      } 
+                    />
+                  </MenuItem>
+                  
+                  {(metricKeys || [])
+                    .filter(k => 
+                      k && !k.toLowerCase().includes('talent') && 
+                      !k.toLowerCase().includes('score')
+                    )
+                    .map((k) => (
+                      <MenuItem key={k} value={k} sx={{ py: 0.5 }}>
+                        <Checkbox checked={visibleScoreKeys.has(k)} size="small" />
+                        <ListItemText 
+                          primary={toTitle(k)} 
+                          primaryTypographyProps={{ fontSize: '0.875rem' }}
+                        />
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+            )}
+          </Box>
         </Box>
         <Box sx={{ height: 400 }}>
           <ResponsiveContainer width="100%" height="100%">

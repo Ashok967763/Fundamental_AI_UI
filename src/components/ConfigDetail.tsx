@@ -257,11 +257,11 @@ const ConfigDetail: React.FC = () => {
           Scores Overview
         </Typography>
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             {/* Talents Dropdown */}
             {(metricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 && (
-              <FormControl sx={{ minWidth: 180 }} size="small">
-                <InputLabel>🎯 Talents</InputLabel>
+              <FormControl sx={{ width: '50%', flexShrink: 0 }} size="small">
+                <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>🎯 Talents</InputLabel>
                 <Select
                   multiple
                   value={Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('talent'))}
@@ -299,19 +299,40 @@ const ConfigDetail: React.FC = () => {
                     setVisibleScoreKeys(newKeys);
                   }}
                   input={<OutlinedInput label="🎯 Talents" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={toTitle(value).replace('Talent', '').trim()} 
-                          size="small" 
-                          color="primary"
-                          variant="outlined"
-              />
-            ))}
-                    </Box>
-                  )}
+                  renderValue={(selected) => {
+                    const maxVisible = Math.min(6, selected.length); // Show up to 6 chips
+                    return (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexWrap: 'nowrap', 
+                        gap: 0.5, 
+                        maxWidth: '100%', 
+                        overflow: 'hidden',
+                        height: '20px',
+                        alignItems: 'center'
+                      }}>
+                        {selected.slice(0, maxVisible).map((value) => (
+                          <Chip 
+                            key={value} 
+                            label={toTitle(value).replace('Talent', '').trim()} 
+                            size="small" 
+                            color="primary"
+                            variant="outlined"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        ))}
+                        {selected.length > maxVisible && (
+                          <Chip 
+                            label={`+${selected.length - maxVisible}`} 
+                            size="small" 
+                            color="primary"
+                            variant="filled"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  }}
                   MenuProps={{
                     PaperProps: {
                       style: {
@@ -382,8 +403,8 @@ const ConfigDetail: React.FC = () => {
 
             {/* Scores Dropdown */}
             {(metricKeys || []).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent')).length > 0 && (
-              <FormControl sx={{ minWidth: 180 }} size="small">
-                <InputLabel>📊 Scores</InputLabel>
+              <FormControl sx={{ width: '50%', flexShrink: 0 }} size="small">
+                <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>📊 Scores</InputLabel>
                 <Select
                   multiple
                   value={Array.from(visibleScoreKeys).filter(k => k && k.toLowerCase().includes('score') && !k.toLowerCase().includes('talent'))}
@@ -421,19 +442,40 @@ const ConfigDetail: React.FC = () => {
                     setVisibleScoreKeys(newKeys);
                   }}
                   input={<OutlinedInput label="📊 Scores" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={toTitle(value).replace('Score', '').trim()} 
-                          size="small" 
-                          color="success"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
-                  )}
+                  renderValue={(selected) => {
+                    const maxVisible = Math.min(6, selected.length); // Show up to 6 chips
+                    return (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexWrap: 'nowrap', 
+                        gap: 0.5, 
+                        maxWidth: '100%', 
+                        overflow: 'hidden',
+                        height: '20px',
+                        alignItems: 'center'
+                      }}>
+                        {selected.slice(0, maxVisible).map((value) => (
+                          <Chip 
+                            key={value} 
+                            label={toTitle(value).replace('Score', '').trim()} 
+                            size="small" 
+                            color="success"
+                            variant="outlined"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        ))}
+                        {selected.length > maxVisible && (
+                          <Chip 
+                            label={`+${selected.length - maxVisible}`} 
+                            size="small" 
+                            color="success"
+                            variant="filled"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  }}
                   MenuProps={{
                     PaperProps: {
                       style: {
@@ -507,8 +549,8 @@ const ConfigDetail: React.FC = () => {
               k && !k.toLowerCase().includes('talent') && 
               !k.toLowerCase().includes('score')
             ).length > 0 && (
-              <FormControl sx={{ minWidth: 180 }} size="small">
-                <InputLabel>🔧 Other Metrics</InputLabel>
+              <FormControl sx={{ width: '50%', flexShrink: 0 }} size="small">
+                <InputLabel sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>🔧 Other Metrics</InputLabel>
                 <Select
                   multiple
                   value={Array.from(visibleScoreKeys).filter(k => 
@@ -555,19 +597,40 @@ const ConfigDetail: React.FC = () => {
                     setVisibleScoreKeys(newKeys);
                   }}
                   input={<OutlinedInput label="🔧 Other Metrics" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip 
-                          key={value} 
-                          label={toTitle(value)} 
-                          size="small" 
-                          color="warning"
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
-                  )}
+                  renderValue={(selected) => {
+                    const maxVisible = Math.min(6, selected.length); // Show up to 6 chips
+                    return (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexWrap: 'nowrap', 
+                        gap: 0.5, 
+                        maxWidth: '100%', 
+                        overflow: 'hidden',
+                        height: '20px',
+                        alignItems: 'center'
+                      }}>
+                        {selected.slice(0, maxVisible).map((value) => (
+                          <Chip 
+                            key={value} 
+                            label={toTitle(value)} 
+                            size="small" 
+                            color="warning"
+                            variant="outlined"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        ))}
+                        {selected.length > maxVisible && (
+                          <Chip 
+                            label={`+${selected.length - maxVisible}`} 
+                            size="small" 
+                            color="warning"
+                            variant="filled"
+                            sx={{ fontSize: '0.75rem', height: '20px' }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  }}
                   MenuProps={{
                     PaperProps: {
                       style: {

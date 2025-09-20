@@ -20,12 +20,23 @@ interface PlotlyScoresChartProps {
   setVisibleScoreKeys: (keys: Set<string>) => void;
 }
 
+// Mock data for overlay chart
+const generateOverlayData = (xValues: number[]) => {
+  return xValues.map(x => {
+    // Generate some interesting overlay data - could be performance metrics, cost, etc.
+    const baseValue = 50 + 20 * Math.sin(x * 0.1) + 10 * Math.cos(x * 0.05);
+    const noise = (Math.random() - 0.5) * 10;
+    return Math.max(0, Math.min(100, baseValue + noise));
+  });
+};
+
 const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
   scoresData,
   visibleScoreKeys,
   onToggleScoreSeries,
   setVisibleScoreKeys,
 }) => {
+  const [showOverlay, setShowOverlay] = useState(true);
   const scoreEntries = useMemo(() => Object.entries(scoresData || {}), [scoresData]);
   
   const scoreMetricKeys = useMemo(() => {
@@ -37,9 +48,23 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
     });
   }, [scoreEntries]);
 
-  // Line styles for colorblind accessibility
-  const lineStyles = ['solid', 'dash', 'dot', 'dashdot'];
-  const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'];
+  // Enhanced visual differentiation
+  const lineStyles = ['solid', 'dash', 'dot', 'dashdot', 'longdash', 'longdashdot'];
+  const colors = [
+    '#1f77b4', // Blue
+    '#ff7f0e', // Orange  
+    '#2ca02c', // Green
+    '#d62728', // Red
+    '#9467bd', // Purple
+    '#17becf', // Cyan
+    '#ff9896', // Light Red
+    '#98df8a', // Light Green
+    '#ffbb78', // Light Orange
+    '#c5b0d5', // Light Purple
+    '#c49c94', // Light Brown
+  ];
+  const lineWidths = [2, 2.5, 3, 3.5, 4, 2, 2.5, 3, 3.5, 4, 2, 2.5, 3, 3.5, 4, 2];
+  const markerSizes = [4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 4];
 
   const toTitle = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -59,28 +84,38 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
       })
       .sort((a, b) => a.x - b.x);
 
-    return scoreMetricKeys
+    const xValues = data.map(d => d.x);
+    
+    // Main score data (left y-axis)
+    const mainData = scoreMetricKeys
       .filter(k => visibleScoreKeys.has(k))
       .map((key, index) => {
-        // Keep all data points but handle null values properly
-        const xValues = data.map(d => d.x);
         const yValues = data.map(d => d[key]);
         
         const lineColor = colors[index % colors.length];
+        const lineStyle = lineStyles[index % lineStyles.length];
+        const lineWidth = lineWidths[index % lineWidths.length];
+        const markerSize = markerSizes[index % markerSizes.length];
+        
         return {
           x: xValues,
           y: yValues,
           type: 'scatter' as const,
           mode: 'lines+markers' as const,
           name: toTitle(key),
+          yaxis: 'y',
           line: {
             color: lineColor,
-            dash: lineStyles[index % lineStyles.length] as any,
-            width: 2,
+            dash: lineStyle as any,
+            width: lineWidth,
           },
           marker: {
-            size: 4,
+            size: markerSize,
             color: lineColor,
+            line: {
+              width: 1,
+              color: '#ffffff'
+            }
           },
           hovertemplate: `<b>${toTitle(key)}</b><br>X: %{x}<br>Y: %{y:.3f}<extra></extra>`,
           connectgaps: false, // Don't connect lines across null values
@@ -103,7 +138,54 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
           }
         };
       });
-  }, [scoreEntries, scoreMetricKeys, visibleScoreKeys]);
+
+    // Overlay data (right y-axis)
+    const overlayData = showOverlay ? [{
+      x: xValues,
+      y: generateOverlayData(xValues),
+      type: 'scatter' as const,
+      mode: 'lines+markers' as const,
+      name: 'Performance Metric',
+      yaxis: 'y2',
+      line: {
+        color: '#ff1744',
+        dash: 'longdash' as any,
+        width: 4,
+      },
+      marker: {
+        size: 8,
+        color: '#ff1744',
+        symbol: 'diamond',
+        line: {
+          width: 2,
+          color: '#ffffff'
+        }
+      },
+      hovertemplate: `<b>Performance Metric</b><br>X: %{x}<br>Value: %{y:.1f}<extra></extra>`,
+      connectgaps: false,
+      hoverlabel: {
+        bgcolor: '#ff1744',
+        bordercolor: '#ff1744',
+        font: {
+          family: 'Arial, sans-serif',
+          size: 12,
+          color: '#ffffff'
+        }
+      }
+    }] : [];
+
+    return [...mainData, ...overlayData];
+  }, [scoreEntries, scoreMetricKeys, visibleScoreKeys, showOverlay]);
+
+  // Calculate x-axis range to eliminate gaps
+  const xAxisRange = useMemo(() => {
+    if (!scoreEntries.length) return undefined;
+    const xValues = scoreEntries.map(([x]) => Number(x)).sort((a, b) => a - b);
+    const minX = Math.min(...xValues);
+    const maxX = Math.max(...xValues);
+    const padding = (maxX - minX) * 0.02; // 2% padding
+    return [minX - padding, maxX + padding];
+  }, [scoreEntries]);
 
   const layout = {
     title: {
@@ -114,6 +196,8 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
       showgrid: true,
       gridcolor: '#f0f0f0',
       gridwidth: 1,
+      range: xAxisRange,
+      autorange: false,
     },
     yaxis: {
       title: { text: 'Score Value' },
@@ -121,6 +205,15 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
       showgrid: true,
       gridcolor: '#f0f0f0',
       gridwidth: 1,
+      side: 'left' as const,
+    },
+    yaxis2: {
+      title: { text: 'Performance Metric' },
+      range: [0, 100],
+      showgrid: false,
+      overlaying: 'y' as const,
+      side: 'right' as const,
+      position: 1,
     },
     hovermode: 'closest' as const,
     showlegend: true,
@@ -130,7 +223,7 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
       x: 0.5,
       xanchor: 'center' as const,
     },
-    margin: { t: 50, r: 50, b: 80, l: 50 },
+    margin: { t: 50, r: 80, b: 80, l: 50 },
     plot_bgcolor: 'white',
     paper_bgcolor: 'white'
   };
@@ -150,6 +243,18 @@ const PlotlyScoresChart: React.FC<PlotlyScoresChartProps> = ({
       
       {/* Dropdown Filters */}
       <Box sx={{ mb: 2 }}>
+        {/* Overlay Toggle */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Checkbox
+            checked={showOverlay}
+            onChange={(e) => setShowOverlay(e.target.checked)}
+            size="small"
+          />
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            Show Performance Metric Overlay
+          </Typography>
+        </Box>
+        
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'nowrap', alignItems: 'flex-start' }}>
           {/* Talents Dropdown */}
           {(scoreMetricKeys || []).filter(k => k && k.toLowerCase().includes('talent')).length > 0 && (

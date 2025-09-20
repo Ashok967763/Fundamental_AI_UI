@@ -18,7 +18,6 @@ import {
   Menu,
   MenuItem,
   Chip,
-  Tooltip,
   Fade,
 } from '@mui/material';
 import {
@@ -33,6 +32,7 @@ import {
   Psychology as PsychologyIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
+import CustomTooltip from './CustomTooltip';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -203,14 +203,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title="Notifications">
+            <CustomTooltip title="Notifications">
               <IconButton color="inherit">
                 <Badge badgeContent={3} color="error">
                   <NotificationsIcon />
                 </Badge>
               </IconButton>
-            </Tooltip>
-            <Tooltip title="Account">
+            </CustomTooltip>
+            <CustomTooltip title="Account">
               <IconButton
                 size="large"
                 edge="end"
@@ -224,7 +224,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <AccountCircleIcon />
                 </Avatar>
               </IconButton>
-            </Tooltip>
+            </CustomTooltip>
           </Box>
         </Toolbar>
       </AppBar>

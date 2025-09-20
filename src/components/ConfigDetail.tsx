@@ -18,7 +18,6 @@ import {
   Card,
   CardContent,
   IconButton,
-  Tooltip,
   LinearProgress,
   Avatar,
   Divider,
@@ -69,6 +68,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { apiClient } from '../services/api';
 import { mockScores } from '../data/mockScores';
 import { ConfigDetail as ConfigDetailType } from '../types';
+import PlotlyScoresChart from './PlotlyScoresChart';
+import CustomTooltip from './CustomTooltip';
 
 const ConfigDetail: React.FC = () => {
   const { configId } = useParams<{ configId: string }>();
@@ -877,16 +878,16 @@ const ConfigDetail: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Refresh Data">
+            <CustomTooltip title="Refresh Data">
               <IconButton onClick={handleRefresh} disabled={isRefreshing}>
                 <Refresh />
               </IconButton>
-            </Tooltip>
-            <Tooltip title="More Options">
+            </CustomTooltip>
+            <CustomTooltip title="More Options">
               <IconButton onClick={handleMenuOpen}>
                 <MoreVert />
               </IconButton>
-            </Tooltip>
+            </CustomTooltip>
           </Box>
         </Box>
 
@@ -1009,36 +1010,45 @@ const ConfigDetail: React.FC = () => {
             <Grid item xs={12}>
               <Card>
                 <CardContent>
-                {renderScoresChart()}
+                  {/* Plotly Chart */}
+                  <PlotlyScoresChart
+                    scoresData={scoresData}
+                    visibleScoreKeys={visibleScoreKeys}
+                    onToggleScoreSeries={toggleScoreSeries}
+                    setVisibleScoreKeys={setVisibleScoreKeys}
+                  />
+                  
+                  {/* Original Recharts Chart */}
+                  {renderScoresChart()}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h5" fontWeight={600}>
                       Performance Trend
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
-                      <Tooltip title="Line Chart">
+                      <CustomTooltip title="Line Chart">
                         <IconButton
                           onClick={() => setChartType('line')}
                           color={chartType === 'line' ? 'primary' : 'default'}
                         >
                           <ShowChart />
                         </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Area Chart">
+                      </CustomTooltip>
+                      <CustomTooltip title="Area Chart">
                         <IconButton
                           onClick={() => setChartType('area')}
                           color={chartType === 'area' ? 'primary' : 'default'}
                         >
                           <BarChart />
                         </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Bar Chart">
+                      </CustomTooltip>
+                      <CustomTooltip title="Bar Chart">
                         <IconButton
                           onClick={() => setChartType('bar')}
                           color={chartType === 'bar' ? 'primary' : 'default'}
                         >
                           <PieChart />
                         </IconButton>
-                      </Tooltip>
+                      </CustomTooltip>
                     </Box>
                   </Box>
                   <Box sx={{ height: 400 }}>

@@ -16,7 +16,6 @@ import {
   CardContent,
   Grid,
   LinearProgress,
-  Tooltip,
   Fade,
   Zoom,
   Avatar,
@@ -55,6 +54,7 @@ import {
 } from '@mui/icons-material';
 import { apiClient } from '../services/api';
 import { Config, DashboardOverview as DashboardOverviewType } from '../types';
+import CustomTooltip from './CustomTooltip';
 
 const DashboardOverview: React.FC = () => {
   const navigate = useNavigate();
@@ -473,7 +473,7 @@ const DashboardOverview: React.FC = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <Tooltip title={config.evaluation} arrow>
+                          <CustomTooltip title={config.evaluation} arrow>
                             <Typography
                               variant="body2"
                               color="text.secondary"
@@ -486,12 +486,12 @@ const DashboardOverview: React.FC = () => {
                             >
                               {config.evaluation}
                             </Typography>
-                          </Tooltip>
+                          </CustomTooltip>
                         </TableCell>
                         
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Tooltip title="View Details" arrow>
+                            <CustomTooltip title="View Details" arrow>
                               <IconButton
                                 size="small"
                                 color="primary"
@@ -502,15 +502,15 @@ const DashboardOverview: React.FC = () => {
                               >
                                 <ArrowForward />
                               </IconButton>
-                            </Tooltip>
-                            <Tooltip title="More Options" arrow>
+                            </CustomTooltip>
+                            <CustomTooltip title="More Options" arrow>
                               <IconButton
                                 size="small"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreVert />
                               </IconButton>
-                            </Tooltip>
+                            </CustomTooltip>
                           </Box>
                         </TableCell>
                       </TableRow>
